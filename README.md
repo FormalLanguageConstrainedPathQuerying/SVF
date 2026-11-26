@@ -10,12 +10,12 @@
 
 ## TL;DR
 
-Replaces the standard worklist-based CFL reachability algorithm with a Boolean-matrix (linear algebra) formulation solved by [LAGraph](https://github.com/Aleksey2509/LAGraph), achieving <STUB: e.g. "up to 4.2× speedup and 30% lower peak memory"> on <STUB: benchmark suite>.
-<STUB: second sentence, e.g. "Both solvers produce results identical to the baseline; the advanced variant additionally exploits LAGraph's sparsity-aware optimizations (empty/format/lazy/block).">
+Replaces the standard worklist-based CFL reachability algorithm with a Boolean-matrix (linear algebra) formulation solved by [LAGraph](https://github.com/Aleksey2509/LAGraph), achieving up to ~36× speedup and 1.1–2.5× lower peak memory on potential-aliasing analysis over 20 open-source projects (SPEC CPU 2017 + Phoronix Test Suite).
+The optimized solver implements the algorithm of [Muravev (arXiv:2401.11029)](https://arxiv.org/abs/2401.11029) on top of the matrix CFL reachability of [Azimov & Grigorev (GRADES/NDA 2018)](https://doi.org/10.1145/3210259.3210264), as implemented in the [LAGraph](https://github.com/Aleksey2509/LAGraph) fork (tag `homka122/CFL_optimizations`).
 
 ## How it works
 
-<STUB: 3–6 sentences: CFL reachability recast as a closure over Boolean matrices; the grammar is converted to WCNF rules, each terminal becomes an adjacency matrix, and the fixed point is reached by matrix multiplication; results are copied back into the CFL graph (by default only start-nonterminal edges).>
+Both solvers express CFL reachability as a closure over Boolean matrices: the grammar is converted to (extended) weak Chomsky normal form, each terminal becomes an adjacency matrix, and the fixed point is computed with sparse matrix multiplication (SuiteSparse:GraphBLAS). `MTXSolver` implements the base algorithm of [Azimov & Grigorev](https://doi.org/10.1145/3210259.3210264); `AdvMTXSolver` adds the optimizations of [Muravev](https://arxiv.org/abs/2401.11029) — incremental computation, storage-format management, lazy matrix addition, and block multiplication for indexed rule families — via the [LAGraph](https://github.com/Aleksey2509/LAGraph) fork.
 
 Two solvers are provided, selectable via CLI flags:
 
@@ -32,23 +32,95 @@ Implementation: [`svf/include/CFL/CFLSolver.h`](svf/include/CFL/CFLSolver.h) · 
 
 | Component | Specification |
 |---|---|
-| CPU | <STUB: e.g. AMD Ryzen 9 7950X, 16 cores> |
-| RAM | <STUB: e.g. 64 GB DDR5> |
-| OS | <STUB: e.g. Ubuntu 24.04 LTS> |
-| LLVM | <STUB: e.g. 18.1.8> |
-| Build | <STUB: e.g. Release, -O3, single-threaded> |
+| OS | Ubuntu 24.04 |
+| CPU | Intel Core i9-13905H (14 cores / 20 threads) |
+| RAM | 32 GB |
+| LLVM | <STUB: version> |
+
+### Dataset
+
+20 open-source projects from [SPEC CPU 2017](https://www.spec.org/cpu2017/) and the [Phoronix Test Suite](https://www.phoronix-test-suite.com/): a compiler, an archiver, 3D renderers, video codecs, and telecom protocol stacks. Each project is compiled to LLVM IR (`clang -save-temps`), `mem2reg` is applied via `opt`, and each IR file is analyzed as a separate unit. CFL graph sizes per project:
+
+| Project | Source | Median vertices | Max vertices | Median edges | Max edges |
+|---|---|---:|---:|---:|---:|
+| povray | [POVRay/povray](https://github.com/POVRay/povray) | 1739 | 7696 | 3174 | 37756 |
+| blender | [blender/blender](https://github.com/blender/blender) | 1469.5 | 23821 | 2639 | 79074 |
+| srsLTE | [srsran/srsLTE](https://github.com/srsran/srsLTE) | 2922 | 7855 | 5656 | 14986 |
+| srsRAN | [srsran/srsRAN](https://github.com/srsran/srsRAN) | 3432.5 | 10552 | 6614 | 19840 |
+| gcc | [gcc-mirror/gcc](https://github.com/gcc-mirror/gcc) | 2079 | 7922 | 4954 | 353704 |
+| x264 | [mirror/x264](https://github.com/mirror/x264) | 1751.5 | 22652 | 3485 | 79572 |
+| nab | [SPEC CPU 2017 544.nab_r](https://www.spec.org/cpu2017/) (source not public) | 3428 | 4815 | 7856 | 88436 |
+| xz | [tukaani-project/xz](https://github.com/tukaani-project/xz) | 1467 | 3051 | 3455 | 7554 |
+| SVT-AV1 | [SVTVideo/SVT-AV1](https://github.com/SVTVideo/SVT-AV1) | 3236.5 | 25620 | 6892 | 174638 |
+| SVT-HEVC | [SVTVideo/SVT-HEVC](https://github.com/SVTVideo/SVT-HEVC) | 3478 | 9354 | 5042 | 32880 |
+| SVT-VP9 | [SVTVideo/SVT-VP9](https://github.com/SVTVideo/SVT-VP9) | 5420 | 10514 | 9402 | 22488 |
+| aom | [aomedia/av1](https://github.com/aomedia/av1) | 2752 | 16996 | 6256 | 36090 |
+| kvazaar | [videolan/kvazaar](https://github.com/videolan/kvazaar) | 5090 | 5179 | 10806 | 12656 |
+| dav1d | [videolan/dav1d](https://github.com/videolan/dav1d) | 3424 | 4891 | 7060 | 9576 |
+| ffmpeg | [FFmpeg/FFmpeg](https://github.com/FFmpeg/FFmpeg) | 727.5 | 36228 | 1298 | 84284 |
+| libgav | [chromium/libgav1](https://chromium.googlesource.com/codecs/libgav1) | 2693 | 7394 | 5036 | 16268 |
+| openapv | [AcademySoftwareFoundation/openapv](https://github.com/AcademySoftwareFoundation/openapv) | 2626 | 4268 | 5428 | 8360 |
+| uvg266 | [fraunhoferhhi/uvg266](https://github.com/fraunhoferhhi/uvg266) | 3521.5 | 15780 | 7570 | 36834 |
+| vvenc | [fraunhoferhhi/vvenc](https://github.com/fraunhoferhhi/vvenc) | 2753.5 | 7469 | 7014 | 17430 |
+| x265 | [x265/x265](https://github.com/x265/x265) | 4850 | 14552 | 9310 | 22784 |
+
+### Methodology
+
+Two SVF grammars for the potential-aliasing problem: **copy-grammar** (direct dataflow only) and **mem-grammar** (+ memory-mediated flow). Metrics: CFL algorithm runtime and peak RSS (`/usr/bin/time -v`, 32 GB cap). The time comparison uses only modules taking ≥ 1 s in every solver (to reduce noise); the memory comparison uses all modules with valid measurements. Single-threaded solvers are pinned to one core (`taskset -c 0`); multithreaded solvers use all 20 threads. Values are geometric means over modules per program.
 
 ### Results
 
-<STUB: one row per benchmark; seconds, best of N runs>
+Speedup relative to the reference solver (geometric mean over modules; value = time(reference) / time(our solver), so > 1 means our solver is faster; `—` = excluded, all modules < 1 s):
 
-| Benchmark | Baseline (worklist) | MTX | AdvMTX | Speedup (AdvMTX vs Baseline) |
-|---|---:|---:|---:|---:|
-| <STUB: bench 1> | <STUB> | <STUB> | <STUB> | <STUB> |
-| <STUB: bench 2> | <STUB> | <STUB> | <STUB> | <STUB> |
-| **Geometric mean** | 1.00× | <STUB> | <STUB> | <STUB> |
+| Benchmark | copy: MTX / AdvMTX (vs base) | copy: MTX / AdvMTX (vs POCR) | copy: MTX / AdvMTX (vs POCRHybrid) | mem: MTX / AdvMTX (vs base) | mem: MTX / AdvMTX (vs POCR) | mem: MTX / AdvMTX (vs POCRHybrid) |
+|---|---|---|---|---|---|---|
+| povray | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| blender | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| srsLTE | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| nab | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| x264 | <STUB> | <STUB> | <STUB> | — | — | — |
+| srsRAN | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| gcc_r | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| aom | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| vvenc | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| SVT-VP9 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| ffmpeg | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| SVT-AV1 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| uvg266 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| kvazaar | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| libgav | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| SVT-HEVC | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| x265 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| dav1d | — | — | — | — | — | — |
+| openapv | — | — | — | — | — | — |
+| xz | — | — | — | — | — | — |
 
-<STUB: chart, e.g. ![Benchmark results](docs/images/mtx-benchmarks.png)>
+Relative peak memory vs the reference solver (geometric mean over modules; value = peak RSS(our solver) / peak RSS(reference), so < 1 means our solver uses less memory):
+
+| Benchmark | copy: MTX / AdvMTX (vs base) | copy: MTX / AdvMTX (vs POCR) | copy: MTX / AdvMTX (vs POCRHybrid) | mem: MTX / AdvMTX (vs base) | mem: MTX / AdvMTX (vs POCR) | mem: MTX / AdvMTX (vs POCRHybrid) |
+|---|---|---|---|---|---|---|
+| povray | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| blender | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| srsLTE | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| nab | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| x264 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| srsRAN | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| gcc_r | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| aom | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| vvenc | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| SVT-VP9 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| ffmpeg | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| SVT-AV1 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| uvg266 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| kvazaar | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| libgav | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| SVT-HEVC | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| x265 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| dav1d | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| openapv | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+| xz | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
+
+**Analysis.** AdvMTX is the fastest solver on every program and grammar. The base MTX solver is also faster than the worklist baseline, but does not consistently beat POCR/POCRHybrid. The effect of the optimizations is input-dependent: on SVT-VP9 and SVT-HEVC (mem) MTX and AdvMTX are comparable, while on libgav (mem) the difference is substantial. Both matrix solvers use less peak memory than the graph solvers (which exceed the baseline); AdvMTX uses slightly more than MTX. Overall: up to ~36× speedup and 1.1–2.5× lower peak memory.
 
 ### Reproducing
 
@@ -67,11 +139,19 @@ source ./build.sh
 
 ## Visualization
 
-<STUB: side-by-side "before / after" — e.g. per-benchmark runtime bars, or resulting CFL graph / points-to sets dumped with `--cfl-alias-print-graph`.>
+Speedup over the baseline worklist solver (geometric mean over modules) per program. Group 1: SPEC + srsLTE/srsRAN; group 2: video codecs. (Charts from the accompanying paper; axis labels in Russian.)
 
-| Baseline | AdvMTX |
-|---|---|
-| <STUB: image/GIF> | <STUB: image/GIF> |
+![Speedup, group 1, mem-grammar](docs/images/mtx-speedup-group1-mem.png)
+![Speedup, group 1, copy-grammar](docs/images/mtx-speedup-group1-copy.png)
+![Speedup, group 2, mem-grammar](docs/images/mtx-speedup-group2-mem.png)
+![Speedup, group 2, copy-grammar](docs/images/mtx-speedup-group2-copy.png)
+
+Relative peak memory vs the baseline (lower = better).
+
+![Memory, group 1, mem-grammar](docs/images/mtx-memory-group1-mem.png)
+![Memory, group 1, copy-grammar](docs/images/mtx-memory-group1-copy.png)
+![Memory, group 2, mem-grammar](docs/images/mtx-memory-group2-mem.png)
+![Memory, group 2, copy-grammar](docs/images/mtx-memory-group2-copy.png)
 
 ## Quickstart
 
@@ -93,8 +173,8 @@ New CLI options:
 
 * **Changed files:** `svf/include/CFL/{CFLSolver,CFLAlias,CFLVF}.h`, `svf/lib/CFL/{CFLSolver,CFLAlias,CFLVF}.cpp`, `svf-llvm/tools/CFL/cfl.cpp`, `svf/lib/Util/Options.{h,cpp}`, `CMakeLists.txt`, `svf/CMakeLists.txt`, plus supporting changes across the rest of the CFL module (grammar normalization, epsilon rules, non-consecutive attributes).
 * **New dependency:** [LAGraph](https://github.com/Aleksey2509/LAGraph) (fork, tag `homka122/CFL_optimizations`), fetched via CMake `FetchContent`.
-* **Limitations:** <STUB: e.g. "AdvMTXSolver requires a uniformly indexed grammar and aborts otherwise; incremental updates re-run the full matrix solve">
-* **Correctness:** <STUB: e.g. "results verified identical to the baseline on the full test suite">
+* **Limitations:** `AdvMTXSolver` requires uniformly indexed grammar rules: consecutive instance numbering, identical index sets for all indexed symbols within a rule, and complete rule families (it aborts otherwise). Non-conforming grammars can be expanded explicitly (semantics preserved) but lose the block optimization. Incremental updates re-run the full matrix solve.
+* **Correctness:** The matrix solvers compute the same CFL reachability relation as the built-in solvers; all solvers were evaluated on identical input graphs and grammars.
 
 ---
 
