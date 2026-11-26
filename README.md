@@ -11,11 +11,11 @@
 ## TL;DR
 
 Replaces the standard worklist-based CFL reachability algorithm with a Boolean-matrix (linear algebra) formulation solved by [LAGraph](https://github.com/Aleksey2509/LAGraph), achieving up to ~36× speedup and 1.1–2.5× lower peak memory on potential-aliasing analysis over 20 open-source projects (SPEC CPU 2017 + Phoronix Test Suite).
-The optimized solver implements the algorithm of [Muravev (arXiv:2401.11029)](https://arxiv.org/abs/2401.11029) on top of the matrix CFL reachability of [Azimov & Grigorev (GRADES/NDA 2018)](https://doi.org/10.1145/3210259.3210264), as implemented in the [LAGraph](https://github.com/Aleksey2509/LAGraph) fork (tag `homka122/CFL_optimizations`).
+The optimized solver implements the algorithm of [Muravev & Grigorev, STTT 2026](https://link.springer.com/article/10.1007/s10009-026-00864-y) on top of the matrix CFL reachability of [Azimov & Grigorev (GRADES/NDA 2018)](https://doi.org/10.1145/3210259.3210264), as implemented in the [LAGraph](https://github.com/Aleksey2509/LAGraph) fork (tag `homka122/CFL_optimizations`).
 
 ## How it works
 
-Both solvers express CFL reachability as a closure over Boolean matrices: the grammar is converted to (extended) weak Chomsky normal form, each terminal becomes an adjacency matrix, and the fixed point is computed with sparse matrix multiplication (SuiteSparse:GraphBLAS). `MTXSolver` implements the base algorithm of [Azimov & Grigorev](https://doi.org/10.1145/3210259.3210264); `AdvMTXSolver` adds the optimizations of [Muravev](https://arxiv.org/abs/2401.11029) — incremental computation, storage-format management, lazy matrix addition, and block multiplication for indexed rule families — via the [LAGraph](https://github.com/Aleksey2509/LAGraph) fork.
+Both solvers express CFL reachability as a closure over Boolean matrices: the grammar is converted to (extended) weak Chomsky normal form, each terminal becomes an adjacency matrix, and the fixed point is computed with sparse matrix multiplication (SuiteSparse:GraphBLAS). `MTXSolver` implements the base algorithm of [Azimov & Grigorev](https://doi.org/10.1145/3210259.3210264); `AdvMTXSolver` adds the optimizations of [Muravev & Grigorev](https://link.springer.com/article/10.1007/s10009-026-00864-y) — incremental computation, storage-format management, lazy matrix addition, and block multiplication for indexed rule families — via the [LAGraph](https://github.com/Aleksey2509/LAGraph) fork.
 
 Two solvers are provided, selectable via CLI flags:
 
