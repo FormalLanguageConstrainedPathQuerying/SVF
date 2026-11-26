@@ -1,3 +1,103 @@
+> [!NOTE]
+> **This is a fork of [SVF-tools/SVF](https://github.com/SVF-tools/SVF) implementing a linear-algebra-based CFL reachability solver.**
+> * **Status:** Pending merge into the main repository (see [PR #XXX](https://github.com/SVF-tools/SVF/pull/XXX)).
+> * **Branch goal:** Demonstrate the performance gains and benchmarks of the new method.
+> * The original project documentation is [below](#news).
+
+---
+
+# Linear-Algebra-Based CFL Reachability Solver
+
+## TL;DR
+
+Replaces the standard worklist-based CFL reachability algorithm with a Boolean-matrix (linear algebra) formulation solved by [LAGraph](https://github.com/Aleksey2509/LAGraph), achieving <STUB: e.g. "up to 4.2× speedup and 30% lower peak memory"> on <STUB: benchmark suite>.
+<STUB: second sentence, e.g. "Both solvers produce results identical to the baseline; the advanced variant additionally exploits LAGraph's sparsity-aware optimizations (empty/format/lazy/block).">
+
+## How it works
+
+<STUB: 3–6 sentences: CFL reachability recast as a closure over Boolean matrices; the grammar is converted to WCNF rules, each terminal becomes an adjacency matrix, and the fixed point is reached by matrix multiplication; results are copied back into the CFL graph (by default only start-nonterminal edges).>
+
+Two solvers are provided, selectable via CLI flags:
+
+| Solver | Class | Backend call | Notes |
+|---|---|---|---|
+| Matrix | `MTXSolver` | `LAGraph_CFL_reachability` | Direct port of the standard matrix algorithm |
+| Advanced matrix | `AdvMTXSolver` | `LAGraph_CFL_reachability_adv` | Adds LAGraph optimization bitmask; requires a uniformly indexed grammar |
+
+Implementation: [`svf/include/CFL/CFLSolver.h`](svf/include/CFL/CFLSolver.h) · [`svf/lib/CFL/CFLAlias.cpp`](svf/lib/CFL/CFLAlias.cpp) · [`svf-llvm/tools/CFL/cfl.cpp`](svf-llvm/tools/CFL/cfl.cpp)
+
+## Benchmarks
+
+### Test environment
+
+| Component | Specification |
+|---|---|
+| CPU | <STUB: e.g. AMD Ryzen 9 7950X, 16 cores> |
+| RAM | <STUB: e.g. 64 GB DDR5> |
+| OS | <STUB: e.g. Ubuntu 24.04 LTS> |
+| LLVM | <STUB: e.g. 18.1.8> |
+| Build | <STUB: e.g. Release, -O3, single-threaded> |
+
+### Results
+
+<STUB: one row per benchmark; seconds, best of N runs>
+
+| Benchmark | Baseline (worklist) | MTX | AdvMTX | Speedup (AdvMTX vs Baseline) |
+|---|---:|---:|---:|---:|
+| <STUB: bench 1> | <STUB> | <STUB> | <STUB> | <STUB> |
+| <STUB: bench 2> | <STUB> | <STUB> | <STUB> | <STUB> |
+| **Geometric mean** | 1.00× | <STUB> | <STUB> | <STUB> |
+
+<STUB: chart, e.g. ![Benchmark results](docs/images/mtx-benchmarks.png)>
+
+### Reproducing
+
+```bash
+./scripts/benchmark.sh   # <STUB: script to be added; runs all three solvers over the suite, prints the table above>
+```
+
+Manual run on a single program:
+
+```bash
+source ./build.sh
+./build/bin/cfl --cfl-alias-measure-algo-runtime program.bc                        # baseline
+./build/bin/cfl --mtx-alias --cfl-alias-measure-algo-runtime program.bc            # matrix
+./build/bin/cfl --adv-mtx-alias --cfl-alias-measure-algo-runtime program.bc        # advanced matrix
+```
+
+## Visualization
+
+<STUB: side-by-side "before / after" — e.g. per-benchmark runtime bars, or resulting CFL graph / points-to sets dumped with `--cfl-alias-print-graph`.>
+
+| Baseline | AdvMTX |
+|---|---|
+| <STUB: image/GIF> | <STUB: image/GIF> |
+
+## Quickstart
+
+```bash
+source ./build.sh
+./build/bin/cfl --adv-mtx-alias program.bc
+```
+
+New CLI options:
+
+| Flag | Description | Default |
+|---|---|---|
+| `--mtx-alias` | Use the matrix-based CFL solver | off |
+| `--adv-mtx-alias` | Use the advanced matrix-based CFL solver | off |
+| `--adv-mtx-optimizations=<mask>` | LAGraph optimization bitmask: `1`=empty, `2`=format, `4`=lazy, `8`=block | `7` |
+| `--mtx-only-starting` | Copy back only start-nonterminal edges from the matrix result | on |
+
+## Implementation notes (for reviewers)
+
+* **Changed files:** `svf/include/CFL/{CFLSolver,CFLAlias,CFLVF}.h`, `svf/lib/CFL/{CFLSolver,CFLAlias,CFLVF}.cpp`, `svf-llvm/tools/CFL/cfl.cpp`, `svf/lib/Util/Options.{h,cpp}`, `CMakeLists.txt`, `svf/CMakeLists.txt`, plus supporting changes across the rest of the CFL module (grammar normalization, epsilon rules, non-consecutive attributes).
+* **New dependency:** [LAGraph](https://github.com/Aleksey2509/LAGraph) (fork, tag `homka122/CFL_optimizations`), fetched via CMake `FetchContent`.
+* **Limitations:** <STUB: e.g. "AdvMTXSolver requires a uniformly indexed grammar and aborts otherwise; incremental updates re-run the full matrix solve">
+* **Correctness:** <STUB: e.g. "results verified identical to the baseline on the full test suite">
+
+---
+
 <img src="./docs/images/svf_logo_2.png" width="15%"><img src="./docs/images/svf_logo_3.png" width="85%">
 
 SVF provides reusable abstractions, graphs, and solvers for analyzing LLVM IR.
