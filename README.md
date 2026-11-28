@@ -43,7 +43,7 @@ Implementation: [`svf/include/CFL/CFLSolver.h`](svf/include/CFL/CFLSolver.h) · 
 
 | Project | Source | Median vertices | Max vertices | Median edges | Max edges |
 |---|---|---:|---:|---:|---:|
-| povray | [POVRay/povray](https://github.com/POVRay/povray) | 1739 | 7696 | 3174 | 37756 |
+| povray | [POV-Ray/povray](https://github.com/POV-Ray/povray) | 1739 | 7696 | 3174 | 37756 |
 | blender | [blender/blender](https://github.com/blender/blender) | 1469.5 | 23821 | 2639 | 79074 |
 | srsLTE | [srsran/srsLTE](https://github.com/srsran/srsLTE) | 2922 | 7855 | 5656 | 14986 |
 | srsRAN | [srsran/srsRAN](https://github.com/srsran/srsRAN) | 3432.5 | 10552 | 6614 | 19840 |
@@ -51,18 +51,18 @@ Implementation: [`svf/include/CFL/CFLSolver.h`](svf/include/CFL/CFLSolver.h) · 
 | x264 | [mirror/x264](https://github.com/mirror/x264) | 1751.5 | 22652 | 3485 | 79572 |
 | nab | [SPEC CPU 2017 544.nab_r](https://www.spec.org/cpu2017/) (source not public) | 3428 | 4815 | 7856 | 88436 |
 | xz | [tukaani-project/xz](https://github.com/tukaani-project/xz) | 1467 | 3051 | 3455 | 7554 |
-| SVT-AV1 | [SVTVideo/SVT-AV1](https://github.com/SVTVideo/SVT-AV1) | 3236.5 | 25620 | 6892 | 174638 |
-| SVT-HEVC | [SVTVideo/SVT-HEVC](https://github.com/SVTVideo/SVT-HEVC) | 3478 | 9354 | 5042 | 32880 |
-| SVT-VP9 | [SVTVideo/SVT-VP9](https://github.com/SVTVideo/SVT-VP9) | 5420 | 10514 | 9402 | 22488 |
-| aom | [aomedia/av1](https://github.com/aomedia/av1) | 2752 | 16996 | 6256 | 36090 |
-| kvazaar | [videolan/kvazaar](https://github.com/videolan/kvazaar) | 5090 | 5179 | 10806 | 12656 |
+| SVT-AV1 | [AOMediaCodec/SVT-AV1](https://github.com/AOMediaCodec/SVT-AV1) | 3236.5 | 25620 | 6892 | 174638 |
+| SVT-HEVC | [OpenVisualCloud/SVT-HEVC](https://github.com/OpenVisualCloud/SVT-HEVC) | 3478 | 9354 | 5042 | 32880 |
+| SVT-VP9 | [OpenVisualCloud/SVT-VP9](https://github.com/OpenVisualCloud/SVT-VP9) | 5420 | 10514 | 9402 | 22488 |
+| aom | [aomedia/aom](https://aomedia.googlesource.com/aom/) | 2752 | 16996 | 6256 | 36090 |
+| kvazaar | [ultravideo/kvazaar](https://github.com/ultravideo/kvazaar) | 5090 | 5179 | 10806 | 12656 |
 | dav1d | [videolan/dav1d](https://github.com/videolan/dav1d) | 3424 | 4891 | 7060 | 9576 |
 | ffmpeg | [FFmpeg/FFmpeg](https://github.com/FFmpeg/FFmpeg) | 727.5 | 36228 | 1298 | 84284 |
 | libgav | [chromium/libgav1](https://chromium.googlesource.com/codecs/libgav1) | 2693 | 7394 | 5036 | 16268 |
 | openapv | [AcademySoftwareFoundation/openapv](https://github.com/AcademySoftwareFoundation/openapv) | 2626 | 4268 | 5428 | 8360 |
-| uvg266 | [fraunhoferhhi/uvg266](https://github.com/fraunhoferhhi/uvg266) | 3521.5 | 15780 | 7570 | 36834 |
+| uvg266 | [ultravideo/uvg266](https://github.com/ultravideo/uvg266) | 3521.5 | 15780 | 7570 | 36834 |
 | vvenc | [fraunhoferhhi/vvenc](https://github.com/fraunhoferhhi/vvenc) | 2753.5 | 7469 | 7014 | 17430 |
-| x265 | [x265/x265](https://github.com/x265/x265) | 4850 | 14552 | 9310 | 22784 |
+| x265 | [Multicorewareinc/x265](https://github.com/Multicorewareinc/x265) | 4850 | 14552 | 9310 | 22784 |
 
 ### Methodology
 
