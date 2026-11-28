@@ -70,57 +70,9 @@ Two SVF grammars for the potential-aliasing problem: **copy-grammar** (direct da
 
 ### Results
 
-Speedup relative to the reference solver (geometric mean over modules; value = time(reference) / time(our solver), so > 1 means our solver is faster; `—` = excluded, all modules < 1 s):
-
-| Benchmark | copy: MTX / AdvMTX (vs base) | copy: MTX / AdvMTX (vs POCR) | copy: MTX / AdvMTX (vs POCRHybrid) | mem: MTX / AdvMTX (vs base) | mem: MTX / AdvMTX (vs POCR) | mem: MTX / AdvMTX (vs POCRHybrid) |
-|---|---|---|---|---|---|---|
-| povray | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| blender | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| srsLTE | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| nab | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| x264 | <STUB> | <STUB> | <STUB> | — | — | — |
-| srsRAN | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| gcc_r | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| aom | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| vvenc | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| SVT-VP9 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| ffmpeg | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| SVT-AV1 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| uvg266 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| kvazaar | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| libgav | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| SVT-HEVC | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| x265 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| dav1d | — | — | — | — | — | — |
-| openapv | — | — | — | — | — | — |
-| xz | — | — | — | — | — | — |
-
-Relative peak memory vs the reference solver (geometric mean over modules; value = peak RSS(our solver) / peak RSS(reference), so < 1 means our solver uses less memory):
-
-| Benchmark | copy: MTX / AdvMTX (vs base) | copy: MTX / AdvMTX (vs POCR) | copy: MTX / AdvMTX (vs POCRHybrid) | mem: MTX / AdvMTX (vs base) | mem: MTX / AdvMTX (vs POCR) | mem: MTX / AdvMTX (vs POCRHybrid) |
-|---|---|---|---|---|---|---|
-| povray | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| blender | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| srsLTE | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| nab | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| x264 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| srsRAN | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| gcc_r | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| aom | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| vvenc | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| SVT-VP9 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| ffmpeg | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| SVT-AV1 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| uvg266 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| kvazaar | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| libgav | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| SVT-HEVC | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| x265 | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| dav1d | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| openapv | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-| xz | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> | <STUB> |
-
 **Analysis.** AdvMTX is the fastest solver on every program and grammar. The base MTX solver is also faster than the worklist baseline, but does not consistently beat POCR/POCRHybrid. The effect of the optimizations is input-dependent: on SVT-VP9 and SVT-HEVC (mem) MTX and AdvMTX are comparable, while on libgav (mem) the difference is substantial. Both matrix solvers use less peak memory than the graph solvers (which exceed the baseline); AdvMTX uses slightly more than MTX. Overall: up to ~36× speedup and 1.1–2.5× lower peak memory.
+
+Detailed per-file results (all modules, both grammars): [`evaluation_raw_data/RESULTS.md`](evaluation_raw_data/RESULTS.md)
 
 ### Reproducing
 
