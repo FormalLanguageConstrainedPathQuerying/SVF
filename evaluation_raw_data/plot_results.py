@@ -441,10 +441,10 @@ def plot_violin(datasets_by_solver, benches, filename, title, out_dir, log,
         meds = parts.get("cmedians", parts.get("medians", []))
         if isinstance(meds, list):
             for med in meds:
-                med.set_color("white")
+                med.set_color("black")
                 med.set_linewidth(1.0)
         else:
-            meds.set_color("white")
+            meds.set_color("black")
             meds.set_linewidth(1.0)
     _style_axes(ax, benches, ylabel, title, log_y=False,
                 center_offset=(n - 1) * width / 2)
