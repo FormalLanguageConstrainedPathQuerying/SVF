@@ -46,7 +46,7 @@ Implementation: [`svf/include/CFL/CFLSolver.h`](svf/include/CFL/CFLSolver.h) · 
 | povray | [POV-Ray/povray](https://github.com/POV-Ray/povray) | 69 | 1739 | 7696 | 3174 | 37756 |
 | blender | [blender/blender](https://github.com/blender/blender) | 732 | 1469.5 | 23821 | 2639 | 79074 |
 | srsRAN | [srsran/srsRAN](https://github.com/srsran/srsRAN) | 12 | 3432.5 | 10552 | 6614 | 19840 |
-| srsRAN_4G | [srsran/srsRAN](https://github.com/srsran/srsRAN) (4G build) | 52 | <STUB> | <STUB> | <STUB> | <STUB> |
+| srsRAN_4G | [srsran/srsRAN_4G](https://github.com/srsran/srsRAN_4G) (formerly srsLTE) | 52 | 2922 | 7855 | 5656 | 14986 |
 | gcc_r | [gcc-mirror/gcc](https://github.com/gcc-mirror/gcc) | 174 | 2079 | 7922 | 4954 | 353704 |
 | x264 | [mirror/x264](https://github.com/mirror/x264) | 50 | 1751.5 | 22652 | 3485 | 79572 |
 | nab | [SPEC CPU 2017 544.nab_r](https://www.spec.org/cpu2017/) (source not public) | 7 | 3428 | 4815 | 7856 | 88436 |
