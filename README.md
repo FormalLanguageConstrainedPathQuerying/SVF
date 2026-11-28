@@ -91,19 +91,42 @@ source ./build.sh
 
 ## Visualization
 
-Speedup over the baseline worklist solver (geometric mean over modules) per program. Group 1: SPEC + srsLTE/srsRAN; group 2: video codecs. (Charts from the accompanying paper; axis labels in Russian.)
+Per-benchmark results from the evaluation run (all five solvers; per-file data in [`evaluation_raw_data/RESULTS.md`](evaluation_raw_data/RESULTS.md)). Time figures first, then memory.
 
-![Speedup, group 1, mem-grammar](docs/images/mtx-speedup-group1-mem.png)
-![Speedup, group 1, copy-grammar](docs/images/mtx-speedup-group1-copy.png)
-![Speedup, group 2, mem-grammar](docs/images/mtx-speedup-group2-mem.png)
-![Speedup, group 2, copy-grammar](docs/images/mtx-speedup-group2-copy.png)
+**Per-file runtime distribution** (violin, log scale)
 
-Relative peak memory vs the baseline (lower = better).
+![copy-grammar (PEG)](docs/images/eval-violin-time-PEG.png)
+![mem-grammar (PAG)](docs/images/eval-violin-time-PAG.png)
 
-![Memory, group 1, mem-grammar](docs/images/mtx-memory-group1-mem.png)
-![Memory, group 1, copy-grammar](docs/images/mtx-memory-group1-copy.png)
-![Memory, group 2, mem-grammar](docs/images/mtx-memory-group2-mem.png)
-![Memory, group 2, copy-grammar](docs/images/mtx-memory-group2-copy.png)
+**Speedup vs baseline** (geometric mean over modules)
+
+![copy-grammar (PEG)](docs/images/eval-speedup-PEG.png)
+![mem-grammar (PAG)](docs/images/eval-speedup-PAG.png)
+
+**Total runtime** (sum over modules)
+
+![copy-grammar (PEG)](docs/images/eval-time-total-PEG.png)
+![mem-grammar (PAG)](docs/images/eval-time-total-PAG.png)
+
+**Speedup vs baseline** (total time)
+
+![copy-grammar (PEG)](docs/images/eval-speedup-total-PEG.png)
+![mem-grammar (PAG)](docs/images/eval-speedup-total-PAG.png)
+
+**Per-file peak memory distribution** (violin)
+
+![copy-grammar (PEG)](docs/images/eval-violin-memory-PEG.png)
+![mem-grammar (PAG)](docs/images/eval-violin-memory-PAG.png)
+
+**Memory improvement vs baseline** (> 1 = less memory)
+
+![copy-grammar (PEG)](docs/images/eval-memory-ratio-PEG.png)
+![mem-grammar (PAG)](docs/images/eval-memory-ratio-PAG.png)
+
+**Geometric-mean peak memory**
+
+![copy-grammar (PEG)](docs/images/eval-memory-PEG.png)
+![mem-grammar (PAG)](docs/images/eval-memory-PAG.png)
 
 ## Quickstart
 
