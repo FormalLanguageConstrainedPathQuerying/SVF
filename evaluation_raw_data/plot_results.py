@@ -16,7 +16,7 @@ Data layout (see full_combined.json):
 Grammars: PEG = copy-grammar, PAG = mem-grammar. Within each grammar the
 compared solvers are: baseline, pocr-hybrid, pocr-alias, mtx, adv-mtx.
 
-For each grammar this script writes seven figures (geometric means over
+For each grammar this script writes eight figures (geometric means over
 modules per program, no filters):
 
     time_<g>.png          grouped bars: geometric-mean runtime per benchmark,
@@ -38,8 +38,12 @@ modules per program, no filters):
                           per benchmark (KDE in log space by default, so the
                           shape reflects the heavy-tailed data; --linear-y
                           switches to a plain linear violin)
+    violin_memory_<g>.png grouped violins: distribution of per-file peak
+                          memory per benchmark (linear by default, like the
+                          memory bar chart; --log-y switches to a log-space
+                          KDE)
 
-Two condensed series with the same seven figures are also available, selected
+Two condensed series with the same eight figures are also available, selected
 via --series (any combination; default: all):
 
   reduced  -> <out-dir>/reduced/: baseline, best pocr-based variant, best
@@ -174,11 +178,11 @@ def aggregate(data, grammar, skip_empty=True):
     return agg, benches
 
 
-def collect_times(data, grammar, skip_empty=True):
-    """Collect raw per-file processing times.
+def collect_values(data, grammar, field, scale, skip_empty=True):
+    """Collect raw per-file values of one record field.
 
     Returns (raw, benches) where
-        raw[benchmark][solver] = [per-file total times (s)]
+        raw[benchmark][solver] = [per-file record[field] * scale]
     for the five base solvers. Unlike aggregate(), this keeps the full
     per-file lists so distributions (e.g. violin plots) can be drawn.
     """
@@ -195,15 +199,15 @@ def collect_times(data, grammar, skip_empty=True):
         raw[b] = {}
         for name, key in solvers.items():
             cases = data[key].get(b, {})
-            raw[b][name] = [v[1] / 1000.0 for v in cases.values()]
+            raw[b][name] = [v[field] * scale for v in cases.values()]
     return raw, benches
 
 
 def resolve_violin(raw, benches, series_solvers):
-    """Resolve a series' per-solver per-benchmark time lists for a violin.
+    """Resolve a series' per-solver per-benchmark value lists for a violin.
 
     Direct solvers pass through; "best-pocr"/"best-mtx" resolve per
-    benchmark to the winning variant's raw times (lowest geomean time).
+    benchmark to the winning variant's raw values (lowest geomean).
     """
     out = {}
     for name in series_solvers:
@@ -340,25 +344,42 @@ def plot_ratio(agg, benches, grammar, metric, filename, ylabel, title_prefix,
     The ratio is computed from the per-benchmark geometric means
     (baseline geomean / solver geomean), so zero-valued cases cannot cause
     division by zero; such benchmarks are simply skipped (NaN bar).
-    Always drawn with a log y-axis and a reference line at 1.0.
+    Always drawn with a log y-axis and a reference line at 1.0. The best
+    (highest) bar of each group is labeled with its value.
     """
     solvers = SOLVER_ORDER if solvers is None else solvers
     colors = SOLVER_COLORS if colors is None else colors
     fig, ax = plt.subplots(figsize=(14, 6))
     others = [s for s in solvers if s != "baseline"]
     width = 0.8 / len(others)
+    # ratios[xi][i] = ratio of solver i at benchmark xi (NaN if no data)
+    ratios = [[float("nan")] * len(others) for _ in range(len(benches))]
     for i, name in enumerate(others):
-        vals = []
-        for b in benches:
+        for xi, b in enumerate(benches):
             base_v = agg[b].get("baseline", {}).get(metric, 0.0)
             sol_v = agg[b].get(name, {}).get(metric, 0.0)
-            vals.append(base_v / sol_v if base_v > 0 and sol_v > 0 else float("nan"))
+            if base_v > 0 and sol_v > 0:
+                ratios[xi][i] = base_v / sol_v
         ax.bar(
             [xi + i * width for xi in range(len(benches))],
-            vals,
+            [ratios[xi][i] for xi in range(len(benches))],
             width,
             label=name,
             color=colors[name],
+        )
+    # label the best (highest) bar of each group with its value
+    for xi, row in enumerate(ratios):
+        finite = [(v, i) for i, v in enumerate(row) if math.isfinite(v)]
+        if not finite:
+            continue
+        v, i = max(finite)
+        ax.text(
+            xi + i * width,
+            v,
+            f"{v:.1f}",
+            ha="center",
+            va="bottom",
+            fontsize=7,
         )
     ax.axhline(1.0, color="k", linestyle="--", linewidth=0.8)
     _style_axes(
@@ -377,8 +398,8 @@ def plot_ratio(agg, benches, grammar, metric, filename, ylabel, title_prefix,
 
 
 def plot_violin(datasets_by_solver, benches, filename, title, out_dir, log,
-                solvers=None, colors=None):
-    """Grouped violin plot of per-file times, one violin per (bench, solver).
+                solvers=None, colors=None, ylabel="Time (s)"):
+    """Grouped violin plot of per-file values, one violin per (bench, solver).
 
     When log is true the times are transformed to log10 before the KDE so the
     violin shape reflects the (heavy-tailed) distribution correctly; the y
@@ -425,7 +446,7 @@ def plot_violin(datasets_by_solver, benches, filename, title, out_dir, log,
         else:
             meds.set_color("white")
             meds.set_linewidth(1.0)
-    _style_axes(ax, benches, "Time (s)", title, log_y=False,
+    _style_axes(ax, benches, ylabel, title, log_y=False,
                 center_offset=(n - 1) * width / 2)
     # violinplot bodies carry no label, so build the legend manually
     # (after _style_axes, whose ax.legend() would otherwise clobber it)
@@ -530,7 +551,12 @@ def main():
 
     for g in args.grammars:
         agg, benches = aggregate(data, g, skip_empty=not args.keep_empty)
-        raw, _ = collect_times(data, g, skip_empty=not args.keep_empty)
+        # raw per-file values for the violin plots: total time in seconds,
+        # peak memory in GB
+        raw_time, _ = collect_values(data, g, 1, 1 / 1000.0,
+                                     skip_empty=not args.keep_empty)
+        raw_mem, _ = collect_values(data, g, 2, 1 / 1024.0 / 1024.0,
+                                    skip_empty=not args.keep_empty)
         label = GRAMMAR_LABEL[g]
         if "full" in args.series:
             paths = [
@@ -596,7 +622,7 @@ def main():
                     args.out_dir,
                 ),
                 plot_violin(
-                    resolve_violin(raw, benches, SOLVER_ORDER),
+                    resolve_violin(raw_time, benches, SOLVER_ORDER),
                     benches,
                     f"violin_time_{g}.png",
                     f"Per-file runtime distribution — {label}",
@@ -604,6 +630,17 @@ def main():
                     not args.linear_y,
                     solvers=SOLVER_ORDER,
                     colors=SOLVER_COLORS,
+                ),
+                plot_violin(
+                    resolve_violin(raw_mem, benches, SOLVER_ORDER),
+                    benches,
+                    f"violin_memory_{g}.png",
+                    f"Per-file peak memory distribution — {label}",
+                    args.out_dir,
+                    args.log_y,
+                    solvers=SOLVER_ORDER,
+                    colors=SOLVER_COLORS,
+                    ylabel="Peak memory (GB)",
                 ),
             ]
             for p in paths:
@@ -687,7 +724,7 @@ def main():
                     colors=REDUCED_COLORS,
                 ),
                 plot_violin(
-                    resolve_violin(raw, benches, REDUCED_SOLVERS),
+                    resolve_violin(raw_time, benches, REDUCED_SOLVERS),
                     benches,
                     f"violin_time_{g}.png",
                     f"Per-file runtime distribution (best-of) — {label}",
@@ -695,6 +732,17 @@ def main():
                     not args.linear_y,
                     solvers=REDUCED_SOLVERS,
                     colors=REDUCED_COLORS,
+                ),
+                plot_violin(
+                    resolve_violin(raw_mem, benches, REDUCED_SOLVERS),
+                    benches,
+                    f"violin_memory_{g}.png",
+                    f"Per-file peak memory distribution (best-of) — {label}",
+                    red_dir,
+                    args.log_y,
+                    solvers=REDUCED_SOLVERS,
+                    colors=REDUCED_COLORS,
+                    ylabel="Peak memory (GB)",
                 ),
             ]
             for p in red_paths:
@@ -777,7 +825,7 @@ def main():
                     colors=MIXED_COLORS,
                 ),
                 plot_violin(
-                    resolve_violin(raw, benches, MIXED_SOLVERS),
+                    resolve_violin(raw_time, benches, MIXED_SOLVERS),
                     benches,
                     f"violin_time_{g}.png",
                     f"Per-file runtime distribution (best-pocr) — {label}",
@@ -785,6 +833,17 @@ def main():
                     not args.linear_y,
                     solvers=MIXED_SOLVERS,
                     colors=MIXED_COLORS,
+                ),
+                plot_violin(
+                    resolve_violin(raw_mem, benches, MIXED_SOLVERS),
+                    benches,
+                    f"violin_memory_{g}.png",
+                    f"Per-file peak memory distribution (best-pocr) — {label}",
+                    mix_dir,
+                    args.log_y,
+                    solvers=MIXED_SOLVERS,
+                    colors=MIXED_COLORS,
+                    ylabel="Peak memory (GB)",
                 ),
             ]
             for p in mix_paths:
