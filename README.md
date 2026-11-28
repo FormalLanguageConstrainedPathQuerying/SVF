@@ -11,7 +11,7 @@
 ## TL;DR
 
 Replaces the standard worklist-based CFL reachability algorithm with a Boolean-matrix (linear algebra) formulation solved by [LAGraph](https://github.com/Aleksey2509/LAGraph). On potential-aliasing analysis over 19 open-source projects (SPEC CPU 2017 + Phoronix Test Suite), the optimized solver is the fastest on every program and grammar: up to ~17× per-program speedup (up to ~194× per module) over the classic worklist baseline, up to ~12× per program (~5× on average) over the state-of-the-art POCR algorithm, and 1.1–3.1× lower peak memory (up to ~12× per module).
-The optimized solver implements the algorithm of [Muravev & Grigorev, STTT 2026](https://link.springer.com/article/10.1007/s10009-026-00864-y) on top of the matrix CFL reachability of [Azimov & Grigorev (GRADES/NDA 2018)](https://doi.org/10.1145/3210259.3210264), as implemented in the [LAGraph](https://github.com/Aleksey2509/LAGraph) fork (tag `homka122/CFL_optimizations`). POCR and POCRHybrid implement [Lei et al., OOPSLA 2022](https://doi.org/10.1145/3563343).
+The optimized solver realizes the algorithm of [Muravev & Grigorev, STTT 2026](https://link.springer.com/article/10.1007/s10009-026-00864-y) on top of the matrix CFL reachability of [Azimov & Grigorev (GRADES/NDA 2018)](https://doi.org/10.1145/3210259.3210264); both matrix CFL reachability algorithms are implemented by Ilkhom Kombaev in the [LAGraph](https://github.com/Aleksey2509/LAGraph) fork (tag `homka122/CFL_optimizations`). POCR and POCRHybrid implement [Lei et al., OOPSLA 2022](https://doi.org/10.1145/3563343).
 
 ## How it works
 
@@ -147,7 +147,7 @@ New CLI options:
 ## Implementation notes (for reviewers)
 
 * **Changed files:** `svf/include/CFL/{CFLSolver,CFLAlias,CFLVF}.h`, `svf/lib/CFL/{CFLSolver,CFLAlias,CFLVF}.cpp`, `svf-llvm/tools/CFL/cfl.cpp`, `svf/lib/Util/Options.{h,cpp}`, `CMakeLists.txt`, `svf/CMakeLists.txt`, plus supporting changes across the rest of the CFL module (grammar normalization, epsilon rules, non-consecutive attributes).
-* **New dependency:** [LAGraph](https://github.com/Aleksey2509/LAGraph) (fork, tag `homka122/CFL_optimizations`), fetched via CMake `FetchContent`.
+* **New dependency:** [LAGraph](https://github.com/Aleksey2509/LAGraph) (fork, tag `homka122/CFL_optimizations`; the CFL reachability algorithms `LAGraph_CFL_reachability` and `LAGraph_CFL_reachability_adv` are implemented by Ilkhom Kombaev), fetched via CMake `FetchContent`.
 * **Limitations:** `AdvMTXSolver` requires uniformly indexed grammar rules: consecutive instance numbering, identical index sets for all indexed symbols within a rule, and complete rule families (it aborts otherwise). Non-conforming grammars can be expanded explicitly (semantics preserved) but lose the block optimization. Incremental updates re-run the full matrix solve.
 * **Correctness:** The matrix solvers compute the same CFL reachability relation as the built-in solvers; all solvers were evaluated on identical input graphs and grammars.
 
