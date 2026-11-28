@@ -10,8 +10,8 @@
 
 ## TL;DR
 
-Replaces the standard worklist-based CFL reachability algorithm with a Boolean-matrix (linear algebra) formulation solved by [LAGraph](https://github.com/Aleksey2509/LAGraph), achieving up to ~17× per-program speedup (up to ~194× on individual modules) and 1.1–3.1× lower peak memory (up to ~12× per module) on potential-aliasing analysis over 19 open-source projects (SPEC CPU 2017 + Phoronix Test Suite).
-The optimized solver implements the algorithm of [Muravev & Grigorev, STTT 2026](https://link.springer.com/article/10.1007/s10009-026-00864-y) on top of the matrix CFL reachability of [Azimov & Grigorev (GRADES/NDA 2018)](https://doi.org/10.1145/3210259.3210264), as implemented in the [LAGraph](https://github.com/Aleksey2509/LAGraph) fork (tag `homka122/CFL_optimizations`).
+Replaces the standard worklist-based CFL reachability algorithm with a Boolean-matrix (linear algebra) formulation solved by [LAGraph](https://github.com/Aleksey2509/LAGraph). On potential-aliasing analysis over 19 open-source projects (SPEC CPU 2017 + Phoronix Test Suite), the optimized solver is the fastest on every program and grammar: up to ~17× per-program speedup (up to ~194× per module) over the classic worklist baseline, up to ~12× per program (~5× on average) over the state-of-the-art POCR algorithm, and 1.1–3.1× lower peak memory (up to ~12× per module).
+The optimized solver implements the algorithm of [Muravev & Grigorev, STTT 2026](https://link.springer.com/article/10.1007/s10009-026-00864-y) on top of the matrix CFL reachability of [Azimov & Grigorev (GRADES/NDA 2018)](https://doi.org/10.1145/3210259.3210264), as implemented in the [LAGraph](https://github.com/Aleksey2509/LAGraph) fork (tag `homka122/CFL_optimizations`). POCR and POCRHybrid implement [Lei et al., OOPSLA 2022](https://doi.org/10.1145/3563343).
 
 ## How it works
 
@@ -70,7 +70,7 @@ Two SVF grammars for the potential-aliasing problem: **copy-grammar** (direct da
 
 ### Results
 
-**Analysis.** AdvMTX is the fastest solver on every program and grammar. The base MTX solver is faster than the worklist baseline on the copy-grammar but not consistently on the mem-grammar, and does not consistently beat POCR/POCRHybrid. The effect of the optimizations is input-dependent: the AdvMTX/MTX gap varies widely across programs and grammars. Both matrix solvers use less peak memory than the graph solvers; AdvMTX uses slightly less than MTX. Overall: up to ~17× per-program speedup and 1.1–3.1× lower peak memory.
+**Analysis.** AdvMTX is the fastest solver on every program and grammar, beating both POCR variants on all of them (up to ~12× per program, ~5× on average vs POCRHybrid). The base MTX solver is faster than the worklist baseline on the copy-grammar but not consistently on the mem-grammar, and does not consistently beat POCR/POCRHybrid. The effect of the optimizations is input-dependent: the AdvMTX/MTX gap varies widely across programs and grammars. Both matrix solvers use less peak memory than the graph solvers; AdvMTX uses slightly less than MTX. Overall: up to ~17× per-program speedup and 1.1–3.1× lower peak memory.
 
 Detailed per-file results (all modules, both grammars): [`evaluation_raw_data/RESULTS.md`](evaluation_raw_data/RESULTS.md)
 
