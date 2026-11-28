@@ -10,8 +10,24 @@
 
 ## TL;DR
 
-Replaces the standard worklist-based CFL reachability algorithm with a Boolean-matrix (linear algebra) formulation solved by [LAGraph](https://github.com/Aleksey2509/LAGraph). On potential-aliasing analysis over 19 open-source projects (SPEC CPU 2017 + Phoronix Test Suite), the optimized solver is the fastest on every program and grammar: up to ~17× per-program speedup (up to ~194× per module) over the classic worklist baseline, up to ~12× per program (~5× on average) over the state-of-the-art POCR algorithm, and 1.1–3.1× lower peak memory (up to ~12× per module).
-The optimized solver realizes the algorithm of [Muravev & Grigorev, STTT 2026](https://link.springer.com/article/10.1007/s10009-026-00864-y) on top of the matrix CFL reachability of [Azimov & Grigorev (GRADES/NDA 2018)](https://doi.org/10.1145/3210259.3210264); both matrix CFL reachability algorithms are implemented by Ilkhom Kombaev in the [LAGraph](https://github.com/Aleksey2509/LAGraph) fork (tag `homka122/CFL_optimizations`). POCR and POCRHybrid implement [Lei et al., OOPSLA 2022](https://doi.org/10.1145/3563343).
+Replaces the standard worklist-based CFL reachability algorithm with a Boolean-matrix (linear algebra) formulation solved by [LAGraph](https://github.com/Aleksey2509/LAGraph). On potential-aliasing analysis over 19 open-source projects (SPEC CPU 2017 + Phoronix Test Suite), the advanced matrix solver (`AdvMTXSolver`) is the fastest on every program and grammar: up to ~17× per-program speedup (up to ~194× per module) over the classic worklist baseline, up to ~12× per program (~5× on average) over the state-of-the-art POCR algorithm, and 1.1–3.1× lower peak memory (up to ~12× per module).
+The advanced solver realizes the algorithm of [Muravev & Grigorev, STTT 2026](https://link.springer.com/article/10.1007/s10009-026-00864-y) on top of the matrix CFL reachability of [Azimov & Grigorev (GRADES/NDA 2018)](https://doi.org/10.1145/3210259.3210264); both matrix CFL reachability algorithms are implemented by Ilkhom Kombaev in the [LAGraph](https://github.com/Aleksey2509/LAGraph) fork (tag `homka122/CFL_optimizations`). POCR and POCRHybrid implement [Lei et al., OOPSLA 2022](https://doi.org/10.1145/3563343).
+
+## Quickstart
+
+```bash
+source ./build.sh
+./build/bin/cfl --adv-mtx-alias program.bc
+```
+
+New CLI options:
+
+| Flag | Description | Default |
+|---|---|---|
+| `--mtx-alias` | Use the matrix-based CFL solver | off |
+| `--adv-mtx-alias` | Use the advanced matrix-based CFL solver | off |
+| `--adv-mtx-optimizations=<mask>` | LAGraph optimization bitmask: `1`=empty, `2`=format, `4`=lazy, `8`=block | `7` |
+| `--mtx-only-starting` | Copy back only start-nonterminal edges from the matrix result | on |
 
 ## How it works
 
@@ -66,7 +82,7 @@ Implementation: [`svf/include/CFL/CFLSolver.h`](svf/include/CFL/CFLSolver.h) · 
 
 ### Methodology
 
-Two SVF grammars for the potential-aliasing problem: **copy-grammar** (direct dataflow only) and **mem-grammar** (+ memory-mediated flow). Metrics: CFL algorithm runtime and peak RSS (`/usr/bin/time -v`, 32 GB cap). The time comparison uses only modules taking ≥ 1 s in every solver (to reduce noise); the memory comparison uses all modules with valid measurements. Single-threaded solvers are pinned to one core (`taskset -c 0`); multithreaded solvers use all 20 threads. Values are geometric means over modules per program.
+Two SVF grammars for the potential-aliasing problem: **copy-grammar** (direct dataflow only) and **mem-grammar** (+ memory-mediated flow). Metrics: CFL algorithm runtime and peak RSS (`/usr/bin/time -v`, 32 GB cap). All modules are included (no time filter); per-file values in [`evaluation_raw_data/RESULTS.md`](evaluation_raw_data/RESULTS.md). The graph solvers (baseline, POCR, POCRHybrid) are single-threaded and pinned to one core (`taskset -c 0`); the matrix solvers run multithreaded via SuiteSparse:GraphBLAS on all 20 cores. Values are geometric means over modules per program.
 
 ### Results
 
@@ -91,7 +107,7 @@ source ./build.sh
 
 ## Visualization
 
-Per-benchmark results from the evaluation run (all five solvers; per-file data in [`evaluation_raw_data/RESULTS.md`](evaluation_raw_data/RESULTS.md)). Time figures first, then memory.
+Per-benchmark results from the evaluation run (all five solvers; per-file data in [`evaluation_raw_data/RESULTS.md`](evaluation_raw_data/RESULTS.md)).
 
 **Per-file runtime distribution** (violin, log scale)
 
@@ -128,28 +144,13 @@ Per-benchmark results from the evaluation run (all five solvers; per-file data i
 ![copy-grammar (PEG)](docs/images/eval-memory-PEG.png)
 ![mem-grammar (PAG)](docs/images/eval-memory-PAG.png)
 
-## Quickstart
-
-```bash
-source ./build.sh
-./build/bin/cfl --adv-mtx-alias program.bc
-```
-
-New CLI options:
-
-| Flag | Description | Default |
-|---|---|---|
-| `--mtx-alias` | Use the matrix-based CFL solver | off |
-| `--adv-mtx-alias` | Use the advanced matrix-based CFL solver | off |
-| `--adv-mtx-optimizations=<mask>` | LAGraph optimization bitmask: `1`=empty, `2`=format, `4`=lazy, `8`=block | `7` |
-| `--mtx-only-starting` | Copy back only start-nonterminal edges from the matrix result | on |
-
 ## Implementation notes (for reviewers)
 
+* **Opt-in:** all new CLI flags default to off; default build and analysis behavior is unchanged.
 * **Changed files:** `svf/include/CFL/{CFLSolver,CFLAlias,CFLVF}.h`, `svf/lib/CFL/{CFLSolver,CFLAlias,CFLVF}.cpp`, `svf-llvm/tools/CFL/cfl.cpp`, `svf/lib/Util/Options.{h,cpp}`, `CMakeLists.txt`, `svf/CMakeLists.txt`, plus supporting changes across the rest of the CFL module (grammar normalization, epsilon rules, non-consecutive attributes).
-* **New dependency:** [LAGraph](https://github.com/Aleksey2509/LAGraph) (fork, tag `homka122/CFL_optimizations`; the CFL reachability algorithms `LAGraph_CFL_reachability` and `LAGraph_CFL_reachability_adv` are implemented by Ilkhom Kombaev), fetched via CMake `FetchContent`.
+* **New dependency:** [LAGraph](https://github.com/Aleksey2509/LAGraph) (fork, tag `homka122/CFL_optimizations`; the CFL reachability algorithms `LAGraph_CFL_reachability` and `LAGraph_CFL_reachability_adv` are implemented by Ilkhom Kombaev), fetched via CMake `FetchContent` (adds LAGraph + SuiteSparse:GraphBLAS to the build).
 * **Limitations:** `AdvMTXSolver` requires uniformly indexed grammar rules: consecutive instance numbering, identical index sets for all indexed symbols within a rule, and complete rule families (it aborts otherwise). Non-conforming grammars can be expanded explicitly (semantics preserved) but lose the block optimization. Incremental updates re-run the full matrix solve.
-* **Correctness:** The matrix solvers compute the same CFL reachability relation as the built-in solvers; all solvers were evaluated on identical input graphs and grammars.
+* **Correctness:** verified in isolation — for identical input graphs and grammars, the matrix solvers return the same reachable pairs as the built-in solvers.
 
 ---
 
