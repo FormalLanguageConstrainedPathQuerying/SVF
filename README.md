@@ -20,7 +20,7 @@ source ./build.sh
 ./build/bin/cfl --adv-mtx-alias program.bc
 ```
 
-New CLI options:
+All new flags default to off — existing behavior is unchanged. New CLI options:
 
 | Flag | Description | Default |
 |---|---|---|
@@ -41,6 +41,10 @@ Two solvers are provided, selectable via CLI flags:
 | Advanced matrix | `AdvMTXSolver` | `LAGraph_CFL_reachability_adv` | Adds LAGraph optimization bitmask; requires a uniformly indexed grammar |
 
 Implementation: [`svf/include/CFL/CFLSolver.h`](svf/include/CFL/CFLSolver.h) · [`svf/lib/CFL/CFLAlias.cpp`](svf/lib/CFL/CFLAlias.cpp) · [`svf-llvm/tools/CFL/cfl.cpp`](svf-llvm/tools/CFL/cfl.cpp)
+
+**Limitations.** `AdvMTXSolver` requires uniformly indexed grammar rules: consecutive instance numbering, identical index sets for all indexed symbols within a rule, and complete rule families (it aborts otherwise). Non-conforming grammars can be expanded explicitly (semantics preserved) but lose the block optimization. Incremental updates re-run the full matrix solve.
+
+**Correctness.** Verified in isolation: for identical input graphs and grammars, the matrix solvers return the same reachable pairs as the built-in solvers.
 
 ## Benchmarks
 
@@ -143,14 +147,6 @@ Per-benchmark results from the evaluation run (all five solvers; per-file data i
 
 ![copy-grammar (PEG)](docs/images/eval-memory-PEG.png)
 ![mem-grammar (PAG)](docs/images/eval-memory-PAG.png)
-
-## Implementation notes (for reviewers)
-
-* **Opt-in:** all new CLI flags default to off; default build and analysis behavior is unchanged.
-* **Changed files:** `svf/include/CFL/{CFLSolver,CFLAlias,CFLVF}.h`, `svf/lib/CFL/{CFLSolver,CFLAlias,CFLVF}.cpp`, `svf-llvm/tools/CFL/cfl.cpp`, `svf/lib/Util/Options.{h,cpp}`, `CMakeLists.txt`, `svf/CMakeLists.txt`, plus supporting changes across the rest of the CFL module (grammar normalization, epsilon rules, non-consecutive attributes).
-* **New dependency:** [LAGraph](https://github.com/Aleksey2509/LAGraph) (fork, tag `homka122/CFL_optimizations`; the CFL reachability algorithms `LAGraph_CFL_reachability` and `LAGraph_CFL_reachability_adv` are implemented by Ilkhom Kombaev), fetched via CMake `FetchContent` (adds LAGraph + SuiteSparse:GraphBLAS to the build).
-* **Limitations:** `AdvMTXSolver` requires uniformly indexed grammar rules: consecutive instance numbering, identical index sets for all indexed symbols within a rule, and complete rule families (it aborts otherwise). Non-conforming grammars can be expanded explicitly (semantics preserved) but lose the block optimization. Incremental updates re-run the full matrix solve.
-* **Correctness:** verified in isolation — for identical input graphs and grammars, the matrix solvers return the same reachable pairs as the built-in solvers.
 
 ---
 
